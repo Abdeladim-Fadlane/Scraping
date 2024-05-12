@@ -1,0 +1,43 @@
+services:
+  Database:
+    image: postgres
+    container_name: postgreSql
+    volumes:
+      - ./postgreSql/data/db:/var/lib/postgresql/data
+    env_file:
+      - .env
+
+  auth:
+    build: auth
+    command: python manage.py runserver 0.0.0.0:8000
+    container_name: auth
+    volumes:
+      - ./auth/.:/code
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - Database
+  # api:
+  #   build: api
+  #   command: python manage.py runserver 0.0.0.0:8001
+  #   container_name: api
+  #   volumes:
+  #     - ./api/.:/code
+  #   ports:
+  #     - "8001:8001"
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     - Database
+
+  # webserver:
+  #   build: WebServer
+  #   container_name: nginx
+  #   ports:
+  #     - "443:443"
+  #   depends_on:
+  #     # - api
+  #     - auth
+

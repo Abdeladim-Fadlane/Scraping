@@ -1,0 +1,166 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: gray; /* Set background color */
+        }
+        
+        .navbar {
+            background-color: #333; /* Navbar background color */
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .navbar h1 {
+            margin: 0;
+            font-size: 20px; /* Increase font size */
+        }
+        
+        #pro {
+            border: 2px solid white; /* Add border around user image */
+        }
+        
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        canvas {
+            {% comment %} height: 100vh; /* Set canvas height to full viewport height */ {% endcomment %}
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* Center the canvas */
+            border: 3px solid black;
+            background-color: #fff; /* White background color for canvas */
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1); /* Add shadow effect */
+        }
+        
+        p {
+            background-color: #333; /* Dark background color for text */
+            color: white; /* White text color */
+            padding: 10px; /* Add padding */
+            text-align: center; /* Center text */
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <img src="{{ user.image_url }}" id ="pro"alt="User Image" style="width: 50px; height: 50px; border-radius: 50%;">
+        <h1>{{ user.login}}</h1>
+        <h1>PING PONG</h1>
+        <div>
+            {% comment %} <button id="showMenu">Menu</button> {% endcomment %}
+            <button id="logoutButton">Exit</button>
+        </div>
+    </div>
+    {% comment %} <p>{{ user.username}}</p> {% endcomment %}
+    <canvas width="600px", height="300px" id="canvas"></canvas>
+    <script>
+            document.getElementById("logoutButton").addEventListener('click',exit)
+            function exit(){
+                window.location.href = "/exit/"
+            }
+            const url = `ws://${window.location.host}/ws/socket-server/?id={{user.token_access}}`;
+            {% comment %} const url = `ws://${window.location.host}/ws/socket-server/?id=${{user.token_access}}` {% endcomment %}
+            const chatsocket = new WebSocket(url);
+            chatsocket.onopen = function(event) {
+                console.log("WebSocket connection established.");
+            };
+            var elem = document.getElementById("canvas");
+            var ctx = elem.getContext("2d");
+            width = elem.width
+            height = elem.height
+    
+            function draw_ball(b)
+            {
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.fillStyle = "yellow";
+                ctx.fill();
+            }
+    
+            function put_center()
+            {
+                ctx.beginPath();
+                ctx.moveTo(width / 2, 0);
+                ctx.lineTo(width / 2, height);
+                ctx.stroke();
+            }
+    
+            function put_score(score, x, y)
+            {
+                ctx.font = "60px Arial";
+                ctx.fillText(score, x,y);
+            }
+        
+            function draw_racket(racket)
+            {
+                ctx.fillStyle = "red";
+                x = 0;
+                if (racket.side == 'RIGHT')
+                    x = width - racket.w
+                ctx.fillRect(x, racket.y, racket.w, racket.h);
+            }
+    
+            function draw(data)
+            {
+                ctx.clearRect(0, 0, width, height);
+                put_center();
+                draw_racket(data.racket1);
+                draw_racket(data.racket2);
+                draw_ball(data.b);
+                put_score(data.racket1.score, width / 2 + (40), 20 / 100 * height);
+                put_score(data.ll, 0, 0);
+                put_score(data.racket2.score, width / 2 - (60 + 10), 20 / 100 * height);
+                // requestAnimationFrame(draw);
+            }
+    
+            chatsocket.onmessage = function (e)
+            {
+                var data = JSON.parse(e.data)
+                draw(data);
+            }
+    
+            chatsocket.onopen = () => {
+                console.log('WebSocket connection established.');
+            };
+            document.addEventListener("keydown", (event) => {
+                if (event.key == "w")
+                    chatsocket.send(JSON.stringify('w'));
+                else if (event.key == "s")
+                    chatsocket.send(JSON.stringify('s'));
+                if (event.key == "ArrowUp")
+                    chatsocket.send(JSON.stringify('Up'));
+                else if (event.key == "ArrowDown")
+                    chatsocket.send(JSON.stringify('Down'));
+            });
+            document.addEventListener("keyup", (event) => {
+                if (event.key == "ArrowUp" || event.key == "ArrowDown")
+                    chatsocket.send(JSON.stringify('Stop1'));
+                else if (event.key == "s" || event.key == "w")
+                    chatsocket.send(JSON.stringify('Stop2'));
+            });
+
+    </script>
+</body>
+</html>
