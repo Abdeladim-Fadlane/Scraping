@@ -1,34 +1,25 @@
-
-import requests 
-from bs4 import BeautifulSoup 
+import requests
+from bs4 import BeautifulSoup
 import csv
 
+url_template = "https://wuzzuf.net/search/jobs/?q=python&a=hpb&page={}"
 
-url = "https://wuzzuf.net/search/jobs/?q=python&a=hpb"
-
-response = requests.get(url)
-
-soup = BeautifulSoup(response.content, 'lxml')
-
-divs = soup.find_all('div', {'class': 'css-1gatmva e1v1l3u10'})
 jobs = []
 
-for i in range(len(divs)):
-    title = divs[i].find('a', {'class': 'css-o171kl'}).text.strip()
-    link = divs[i].find('a', {'class': 'css-o171kl'})['href']
-    city = divs[i].find('span', {'class': 'css-5wys0k'}).text.strip()
-    jobs.append({"title": title, "link": link, "city": city})
-    requerment = divs[i].find_all('a', {'class': 'css-o171kl'})
-    for j in range(len(requerment)):
-        requerment[j] = requerment[j].text.strip()
-    jobs.append({"requerment": requerment, "title": title, "link": link, "city": city})
-
+for page in range(1, 6): 
+    url = url_template.format(page)
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, 'lxml')
+    divs = soup.find_all('div', {'class': 'css-1gatmva e1v1l3u10'})
+    for div in divs:
+        title = div.find('a', {'class': 'css-o171kl'}).text.strip()
+        # link = div.find('a', {'class': 'css-o171kl'})['href']
+        city = div.find('span', {'class': 'css-5wys0k'}).text.strip()
+        requirements = [a.text.strip() for a in div.find_all('a', {'class': 'css-o171kl'})]
+        jobs.append({"title": title, "city": city, "requirements": requirements})
 
 with open('jobs.csv', 'w', newline='') as file:
-    writer = csv.DictWriter(file, fieldnames=['title', 'link', 'city', 'requerment'])
+    writer = csv.DictWriter(file, fieldnames=['title', 'city', 'requirements'])
     writer.writeheader()
     for job in jobs:
         writer.writerow(job)
-    
-
-    
