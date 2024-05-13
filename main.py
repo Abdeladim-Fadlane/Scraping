@@ -15,12 +15,11 @@ for page in range(1, 10):
         title = div.find('a', {'class': 'css-o171kl'}).text.strip()
         city = div.find('span', {'class': 'css-5wys0k'}).text.strip()
         requirements = [a.text.strip() for a in div.find_all('a', {'class': 'css-o171kl'})]
-        
+        place = div.find('span', {'class': 'css-o1vzmt eoyjyou0'})
 
-        jobs.append({"title": title, "city": city, "requirements": requirements})
+        jobs.append({"title": title, "city": city, "requirements": requirements, "place": place})
 
 with open('jobs.csv', 'w', newline='') as file:
-    writer = csv.DictWriter(file, fieldnames=['title', 'city', 'requirements'])
-    writer.writeheader()
+    writer = csv.DictWriter(file, fieldnames=['title', 'city', 'requirements', 'place'])
     for job in jobs:
         writer.writerow(job)
