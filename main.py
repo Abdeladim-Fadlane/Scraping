@@ -4,32 +4,31 @@ from bs4 import BeautifulSoup
 import csv
 
 
-data = "05/12/2024"
-def main():
-    soup = BeautifulSoup(requests.get(f"https://www.yallakora.com/Match-Center/?date={data}").content, "lxml")
-    match_details = []
-    championships = soup.find_all("div", {'class': 'matchCard'})
+url = "https://wuzzuf.net/search/jobs/?q=python&a=hpb"
 
-    def get_match_info(championships):
-        championship_title = championships.contents[1].find("h2").text.strip()
-        all_matches = championships.contents[3].find_all("div", {"class": "item future liItem"})
-        number_of_matches = len(all_matches)
-        for i in range(number_of_matches):
-            teamA = all_matches[i].find("div", {"class": "teamA"}).text.strip()
-            teamB = all_matches[i].find("div", {"class": "teamB"}).text.strip()
-            match_result = all_matches[i].find("div", {"class": "MResult"}).find_all("span", {"class": "score"})
-            score = f"{match_result[0].text.strip()}-{match_result[1].text.strip()}"
-            match_time = all_matches[0].find("div", {"class": "MResult"}).find("span", {"class": "time"}).text.strip()
-            match_details.append({"Championship: " : championship_title, "Team A: " : teamA, "Team B: " : teamB, "Score: " : score, "Time: " : match_time})
-       
-    for i in range(len(championships)):
-        get_match_info(championships[i])
-    keys = match_details[0].keys()
+response = requests.get(url)
 
-    with open("yallakora.csv", "w") as output_file:
-        dict_writer = csv.DictWriter(output_file, keys)
-        dict_writer.writeheader()
-        dict_writer.writerows(match_details)
-        
+soup = BeautifulSoup(response.content, 'lxml')
 
-main()
+divs = soup.find_all('div', {'class': 'css-1gatmva e1v1l3u10'})
+jobs = []
+
+for i in range(len(divs)):
+    title = divs[i].find('a', {'class': 'css-o171kl'}).text.strip()
+    link = divs[i].find('a', {'class': 'css-o171kl'})['href']
+    city = divs[i].find('span', {'class': 'css-5wys0k'}).text.strip()
+    jobs.append({"title": title, "link": link, "city": city})
+    requerment = divs[i].find_all('a', {'class': 'css-o171kl'})
+    for j in range(len(requerment)):
+        requerment[j] = requerment[j].text.strip()
+    jobs.append({"requerment": requerment, "title": title, "link": link, "city": city})
+
+
+with open('jobs.csv', 'w', newline='') as file:
+    writer = csv.DictWriter(file, fieldnames=['title', 'link', 'city', 'requerment'])
+    writer.writeheader()
+    for job in jobs:
+        writer.writerow(job)
+    
+
+    
